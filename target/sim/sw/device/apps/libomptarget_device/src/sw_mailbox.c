@@ -25,10 +25,6 @@ volatile struct ring_buf *g_h2a_mbox;
 /***********************************************************************************
  * FUNCTIONS
  ***********************************************************************************/
-// __attribute__((optimize("O0"))) void csleep(uint32_t cycles) {
-//     uint32_t start = snrt_mcycle();
-//     while ((snrt_mcycle() - start) < cycles) {}
-// }
 
 int syscall(uint64_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2,
             uint64_t arg3, uint64_t arg4) {
@@ -49,16 +45,19 @@ int syscall(uint64_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2,
         ret = rb_device_put(rb, (void *)magic_mem);
         if (ret) {
             ++retries;
-            csleep(1000000);
+            csleep(10);
         }
     } while (ret != 0);
     return retries;
 }
 
+#define MBOX_DEVICE_PRINT (0x05U)
+
 void snrt_putchar(char c) {
-    *(volatile uint32_t *)0x2002000 = c;
-    csleep(10000);
-    //syscall(SYS_write, 1, c, 1, 0, 0);
+    //*(volatile uint32_t *)0x2002000 = c;
+    mailbox_write(MBOX_DEVICE_PRINT);
+    csleep(1000);
+    mailbox_write(c);
 }
 
 void snrt_hero_exit(int code) { syscall(SYS_exit, code, 0, 0, 0, 0); }

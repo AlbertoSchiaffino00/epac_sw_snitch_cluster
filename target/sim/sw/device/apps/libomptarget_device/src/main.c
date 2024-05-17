@@ -6,6 +6,8 @@
 #include "sw_mailbox.h"
 #include "snrt.h"
 
+volatile uint32_t dma_wait_cycles = 0;
+
 //================================================================================
 // MACROS AND SETTINGS
 //================================================================================
@@ -255,6 +257,8 @@ static int gomp_offload_manager() {
     // snrt_reset_perf_counter(SNRT_PERF_CNT1);
     // snrt_start_perf_counter(SNRT_PERF_CNT0, SNRT_PERF_CNT_ISSUE_FPU, core_id);
     // snrt_start_perf_counter(SNRT_PERF_CNT1, SNRT_PERF_CNT_DMA_BUSY, core_id);
+    cycles = read_csr(mcycle);
+    dma_wait_cycles = 0;
 
    //offloadFn = (unsigned int *) 0x2f0004ac;
 
@@ -274,6 +278,7 @@ static int gomp_offload_manager() {
     mailbox_write(MBOX_DEVICE_DONE);
     cycles = read_csr(mcycle) - cycles;
     mailbox_write(cycles);
+    mailbox_write(dma_wait_cycles);
 
 
     //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
@@ -316,9 +321,7 @@ int main(int argc, char *argv[]) {
   __snrt_omp_bootstrap(core_idx);
   
 
-  //snrt_trace("omp_bootstrap complete, core_idx: %d core_num: %d\n", core_idx, core_num);
-
-  gomp_offload_manager(); //blocked here. 
+  gomp_offload_manager();
 
   //snrt_trace("bye\n");
   // exit
