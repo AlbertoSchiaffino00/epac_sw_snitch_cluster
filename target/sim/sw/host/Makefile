@@ -5,8 +5,8 @@
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
 # Add user applications to APPS variable
-APPS  = hello_world
-APPS += offload
+# APPS  = hello_world
+# APPS += offload
 
 TARGET ?= all
 

@@ -1,0 +1,60 @@
+OUTPUT_ARCH( "riscv" )
+ENTRY(_start)
+
+SECTIONS
+{
+  debug_base = 0x0;
+  msi_base = 0x00200000;
+  clint_base = 0x02000000;
+  plic_base = 0x0c000000;
+  next_base = 0x40000000;
+  vrp_base = 0x80000000;
+  stx_ext_base = 0xc0000000;
+  . = 0x20000000;
+  /*  The AT keyword defines the LMA, i.e. where the section is loaded. We
+      specify this as the first cluster's external address here for convenient
+      ELF loading with one cluster; for multiple clusters, every individual L1
+      needs should be preloaded with this section. */
+  .l1 : AT(0x21000000) { *(.l1) }
+  .noinit_l1 (NOLOAD) : { *(.noinit_l1) }
+  bootrom_start = 0x2C000000; 
+  l1_alloc_base = ALIGN(0x10);
+  tcdm_start_address_reg = 0x20800000;
+  tcdm_end_address_reg = 0x20800008;
+  nr_cores_address_reg = 0x20800010;
+  fetch_enable_reg = 0x20800018;
+  scratch_reg = 0x20800020;
+  wake_up_reg = 0x20800028;
+  cycle_count_reg = 0x20800030;
+  barrier_reg = 0x20800038;
+  cluster_base_hart_id_reg = 0x20800040;
+  ssr_config_reg = 0x204800;
+  eoc_address = 0x2E000100;
+  l2_size  = 32*1024*8;
+  l2_start = 0x2F000000;
+  l2_end   = l2_start + l2_size;
+  . = 0x2F000000;
+  .text : AT(0x2F000000) {
+    *(.text.init)
+    *(.text)
+  }
+  . = ALIGN(0x10);
+  .data : { *(.data)}
+  .rodata         : { *(.rodata .rodata.* .gnu.linkonce.r.*) }
+  .rodata1        : { *(.rodata1) }
+  .sdata2         :
+  {
+    *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
+  }
+  .sdata          :
+  {
+    __global_pointer$ = . + 0x800;
+    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata .srodata.*)
+    *(.sdata .sdata.* .gnu.linkonce.s.*)
+  }
+  . = .;
+  __bss_start = .;
+  .sbss2          : { *(.sbss2 .sbss2.* .gnu.linkonce.sb2.*) }
+  .bss : { *(.bss) }
+  __bss_end = .;
+}

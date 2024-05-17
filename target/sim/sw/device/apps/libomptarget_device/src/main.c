@@ -11,7 +11,7 @@
 //================================================================================
 
 // set to >0 for debugging
-#define DEBUG_LEVEL_OFFLOAD_MANAGER 1
+#define DEBUG_LEVEL_OFFLOAD_MANAGER 0
 
 const uint32_t active_pe = 8;
 
@@ -58,7 +58,9 @@ typedef struct rab_miss_t {
 //================================================================================
 static volatile uint32_t g_printf_mutex = 0;
 
-static volatile uint32_t *soc_scratch = (uint32_t *)(0x02000014);
+// static volatile uint32_t *soc_scratch = (uint32_t *)(0x20800020); 
+static volatile uint32_t *soc_eoc_scratch = (uint32_t *)(0x2e000100); 
+
 struct l3_layout l3l;
 
 const uint32_t snrt_stack_size __attribute__((weak, section(".rodata"))) = 12;
@@ -168,13 +170,13 @@ static int gomp_offload_manager() {
   uint32_t issue_fpu, dma_busy;
   rab_miss_t rab_miss;
   // reset_vmm();
-
   while (1) {
     //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
     //  snrt_trace("Waiting for command...\n");
 
     // (1) Wait for the offload trigger cmd == MBOX_DEVICE_START
     mailbox_read((unsigned int *)&cmd, 1);
+
     cycles = read_csr(mcycle);
     if (MBOX_DEVICE_STOP == cmd) {
       //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
@@ -208,6 +210,7 @@ static int gomp_offload_manager() {
 
     // (3b) The host sends through the mailbox the number of rab misses handlers threads
     mailbox_read((unsigned int *)&nbOffloadRabMissHandlers, 1);
+
 
     //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
     //  snrt_trace("nbOffloadRabMissHandlers %d/%d\n", nbOffloadRabMissHandlers, active_pe);
@@ -253,7 +256,10 @@ static int gomp_offload_manager() {
     // snrt_start_perf_counter(SNRT_PERF_CNT0, SNRT_PERF_CNT_ISSUE_FPU, core_id);
     // snrt_start_perf_counter(SNRT_PERF_CNT1, SNRT_PERF_CNT_DMA_BUSY, core_id);
 
+   //offloadFn = (unsigned int *) 0x2f0004ac;
+
     offloadFn(offloadArgs);
+
     // snrt_stop_perf_counter(SNRT_PERF_CNT0);
     // snrt_stop_perf_counter(SNRT_PERF_CNT1);
     // issue_fpu = snrt_get_perf_counter(SNRT_PERF_CNT0);
@@ -269,6 +275,7 @@ static int gomp_offload_manager() {
     cycles = read_csr(mcycle) - cycles;
     mailbox_write(cycles);
 
+
     //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
     //  snrt_trace("Kernel execution time [Snitch cycles] = %d\n", cycles);
 
@@ -276,6 +283,8 @@ static int gomp_offload_manager() {
       offload_rab_miss_sync = 0xdeadbeefU;
       // gomp_atomic_add_thread_pool_idle_cores(nbOffloadRabMissHandlers);
     }
+
+    break;
   }
 
   return 0;
@@ -287,28 +296,35 @@ int main(int argc, char *argv[]) {
   unsigned core_idx = snrt_cluster_core_idx();
   unsigned core_num = snrt_cluster_core_num();
 
+
   /**
    * One core initializes the global data structures
    */
+  //actually is the l2 layout
   if (snrt_is_dm_core()) {
-    // read memory layout from scratch2
-    memcpy(&l3l, (void *)soc_scratch[2], sizeof(struct l3_layout));
+   // read memory layout from scratch0
+    // memcpy(&l3l, (void *)soc_scratch[1], sizeof(struct l3_layout));
+    memcpy(&l3l, (void *)soc_eoc_scratch[0], sizeof(struct l3_layout));
     g_a2h_rb = (struct ring_buf *)l3l.a2h_rb;
     g_a2h_mbox = (struct ring_buf *)l3l.a2h_mbox;
     g_h2a_mbox = (struct ring_buf *)l3l.h2a_mbox;
+    
   }
 
   snrt_cluster_hw_barrier();
 
   __snrt_omp_bootstrap(core_idx);
+  
 
   //snrt_trace("omp_bootstrap complete, core_idx: %d core_num: %d\n", core_idx, core_num);
 
-  gomp_offload_manager();
+  gomp_offload_manager(); //blocked here. 
 
   //snrt_trace("bye\n");
   // exit
   __snrt_omp_destroy(core_idx);
+
   snrt_hero_exit(0);
+ 
   return 0;
 }

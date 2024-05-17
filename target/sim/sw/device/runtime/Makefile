@@ -24,7 +24,7 @@ INCDIRS += $(SNRT_DIR)/api
 INCDIRS += $(SNRT_DIR)/api/omp
 INCDIRS += $(SNRT_DIR)/vendor/riscv-opcodes
 INCDIRS += $(SW_DIR)/shared/platform
-INCDIRS += $(SW_DIR)/shared/platform/generated
+INCDIRS += $(SW_DIR)/shared/platform/epac
 INCDIRS += $(SW_DIR)/shared/runtime
 
 # Sources

@@ -21,7 +21,7 @@ OBJS    := $(subst $(SRC_DIR), $(BUILDDIR), $(SRCS:.c=.o))
 LIB     := $(BUILDDIR)/libomptarget_device.a
 
 $(BUILDDIR)/origin.ld: | $(BUILDDIR)
-	echo "L3_ORIGIN = 0xC0000000;" > $(BUILDDIR)/origin.ld
+	echo "L2_ORIGIN = 0x2F000000;" > $(BUILDDIR)/origin.ld
 
 # We first extract objects from libnnruntime and then link them with our objects
 $(BUILDDIR)/libomptarget_device.a: $(OBJS) | $(BUILDDIR)

@@ -19,7 +19,7 @@ SNITCH_ROOT = $(shell bender path snitch_cluster)
 APPSDIR     = $(abspath $(MK_DIR))
 RUNTIME_DIR = $(ROOT)/target/sim/sw/device/runtime
 SNRT_DIR    = $(SNITCH_ROOT)/sw/snRuntime
-SW_DIR      = $(ROOT)/target/sim/sw/
+SW_DIR      = $(ROOT)/target/sim/sw
 MATH_DIR    = $(ROOT)/target/sim/sw/device/math
 
 # Paths relative to the app including this Makefile
@@ -36,7 +36,7 @@ INCDIRS += $(SNRT_DIR)/api/omp
 INCDIRS += $(SNRT_DIR)/src
 INCDIRS += $(SNRT_DIR)/src/omp
 INCDIRS += $(SNRT_DIR)/vendor/riscv-opcodes
-INCDIRS += $(SW_DIR)/shared/platform/generated
+INCDIRS += $(SW_DIR)/shared/platform/epac
 INCDIRS += $(SW_DIR)/shared/platform
 INCDIRS += $(SW_DIR)/shared/runtime
 INCDIRS += $(SNITCH_ROOT)/sw/blas
