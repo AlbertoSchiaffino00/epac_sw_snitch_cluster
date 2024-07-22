@@ -173,121 +173,121 @@ static int gomp_offload_manager() {
   rab_miss_t rab_miss;
   // reset_vmm();
   while (1) {
-    //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-    //  snrt_trace("Waiting for command...\n");
+    // //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    // //  snrt_trace("Waiting for command...\n");
 
-    // (1) Wait for the offload trigger cmd == MBOX_DEVICE_START
-    mailbox_read((unsigned int *)&cmd, 1);
+    // // (1) Wait for the offload trigger cmd == MBOX_DEVICE_START
+    // mailbox_read((unsigned int *)&cmd, 1);
 
-    cycles = read_csr(mcycle);
-    if (MBOX_DEVICE_STOP == cmd) {
-      //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-      //  snrt_trace("Got MBOX_DEVICE_STOP from host, stopping execution now.\n");
-      break;
-    } else if (MBOX_DEVICE_LOGLVL == cmd) {
-      //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-      //  snrt_trace("Got command 0x%x, setting log level.\n", cmd);
-      mailbox_read((unsigned int *)&data, 1);
-      //snrt_debug_set_loglevel(data);
-      continue;
-    } else if (MBOX_DEVICE_START != cmd) {
-      //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-      //  snrt_trace("Got unexpected command 0x%x, stopping execution now.\n", cmd);
-      break;
-    }
+    // cycles = read_csr(mcycle);
+    // if (MBOX_DEVICE_STOP == cmd) {
+    //   //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    //   //  snrt_trace("Got MBOX_DEVICE_STOP from host, stopping execution now.\n");
+    //   break;
+    // } else if (MBOX_DEVICE_LOGLVL == cmd) {
+    //   //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    //   //  snrt_trace("Got command 0x%x, setting log level.\n", cmd);
+    //   mailbox_read((unsigned int *)&data, 1);
+    //   //snrt_debug_set_loglevel(data);
+    //   continue;
+    // } else if (MBOX_DEVICE_START != cmd) {
+    //   //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    //   //  snrt_trace("Got unexpected command 0x%x, stopping execution now.\n", cmd);
+    //   break;
+    // }
 
-    // (2) The host sends through the mailbox the pointer to the function that should be
-    // executed on the accelerator.
-    mailbox_read((unsigned int *)&offloadFn, 1);
+    // // (2) The host sends through the mailbox the pointer to the function that should be
+    // // executed on the accelerator.
+    // mailbox_read((unsigned int *)&offloadFn, 1);
 
-    //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-    //  snrt_trace("tgt_fn @ 0x%x\n", (unsigned int)offloadFn);
+    // //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    // //  snrt_trace("tgt_fn @ 0x%x\n", (unsigned int)offloadFn);
 
-    // (3) The host sends through the mailbox the pointer to the arguments that should
-    // be used.
-    mailbox_read((unsigned int *)&offloadArgs, 1);
+    // // (3) The host sends through the mailbox the pointer to the arguments that should
+    // // be used.
+    // mailbox_read((unsigned int *)&offloadArgs, 1);
 
-    //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-    //  snrt_trace("tgt_vars @ 0x%x\n", (unsigned int)offloadArgs);
+    // //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    // //  snrt_trace("tgt_vars @ 0x%x\n", (unsigned int)offloadArgs);
 
-    // (3b) The host sends through the mailbox the number of rab misses handlers threads
-    mailbox_read((unsigned int *)&nbOffloadRabMissHandlers, 1);
+    // // (3b) The host sends through the mailbox the number of rab misses handlers threads
+    // mailbox_read((unsigned int *)&nbOffloadRabMissHandlers, 1);
 
 
-    //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-    //  snrt_trace("nbOffloadRabMissHandlers %d/%d\n", nbOffloadRabMissHandlers, active_pe);
+    // //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    // //  snrt_trace("nbOffloadRabMissHandlers %d/%d\n", nbOffloadRabMissHandlers, active_pe);
 
-    // (3c) Spawning nbOffloadRabMissHandlers
-    unsigned mhCoreMask = 0;
-    nbOffloadRabMissHandlers =
-        nbOffloadRabMissHandlers < active_pe - 1 ? nbOffloadRabMissHandlers : active_pe - 1;
-    if (nbOffloadRabMissHandlers) {
-      offload_rab_miss_sync = 0x0U;
-      for (int pid = active_pe - 1, i = nbOffloadRabMissHandlers; i > 0; i--, pid--) {
-        //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-        //  snrt_trace("enabling RAB miss handler on %d\n", pid);
-        mhCoreMask |= (1 << pid);
-      }
-    }
-    omp_getData()->maxThreads = active_pe - nbOffloadRabMissHandlers;
-    omp_getData()->numThreads = active_pe - nbOffloadRabMissHandlers;
-    // eu_dispatch_team_config(mhCoreMask);
-    // eu_dispatch_push((unsigned int)&offload_rab_misses_handler);
-    // eu_dispatch_push((unsigned int)&offload_rab_miss_sync);
-    // eu_dispatch_team_config(omp_getData()->coreMask);
+    // // (3c) Spawning nbOffloadRabMissHandlers
+    // unsigned mhCoreMask = 0;
+    // nbOffloadRabMissHandlers =
+    //     nbOffloadRabMissHandlers < active_pe - 1 ? nbOffloadRabMissHandlers : active_pe - 1;
+    // if (nbOffloadRabMissHandlers) {
+    //   offload_rab_miss_sync = 0x0U;
+    //   for (int pid = active_pe - 1, i = nbOffloadRabMissHandlers; i > 0; i--, pid--) {
+    //     //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    //     //  snrt_trace("enabling RAB miss handler on %d\n", pid);
+    //     mhCoreMask |= (1 << pid);
+    //   }
+    // }
+    // omp_getData()->maxThreads = active_pe - nbOffloadRabMissHandlers;
+    // omp_getData()->numThreads = active_pe - nbOffloadRabMissHandlers;
+    // // eu_dispatch_team_config(mhCoreMask);
+    // // eu_dispatch_push((unsigned int)&offload_rab_misses_handler);
+    // // eu_dispatch_push((unsigned int)&offload_rab_miss_sync);
+    // // eu_dispatch_team_config(omp_getData()->coreMask);
 
-    // (4) Ensure access to offloadArgs. It might be in SVM.
-    if (offloadArgs != 0x0) {
-      // FIXME
-      // pulp_tryread((unsigned int *)offloadArgs);
-    }
-    //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-    //  snrt_trace("begin offloading\n");
-    // reset_timer();
-    // start_timer();
+    // // (4) Ensure access to offloadArgs. It might be in SVM.
+    // if (offloadArgs != 0x0) {
+    //   // FIXME
+    //   // pulp_tryread((unsigned int *)offloadArgs);
+    // }
+    // //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    // //  snrt_trace("begin offloading\n");
+    // // reset_timer();
+    // // start_timer();
 
-    //for (unsigned i = 0; i < 16; i += 2) {
-    //  snrt_trace(" %2d: 0x%08x = ... ; %2d: 0x%08x = ...\n", i, ((uint32_t *)offloadArgs)[i],
-    //             /* *((uint32_t *)(((uint32_t *)offloadArgs)[i])) ,*/  i + 1,
-    //             ((uint32_t *)offloadArgs)[i + 1] /*, *((uint32_t *)(((uint32_t *)offloadArgs)[i + 1]))*/ );
-    //}
+    // //for (unsigned i = 0; i < 16; i += 2) {
+    // //  snrt_trace(" %2d: 0x%08x = ... ; %2d: 0x%08x = ...\n", i, ((uint32_t *)offloadArgs)[i],
+    // //             /* *((uint32_t *)(((uint32_t *)offloadArgs)[i])) ,*/  i + 1,
+    // //             ((uint32_t *)offloadArgs)[i + 1] /*, *((uint32_t *)(((uint32_t *)offloadArgs)[i + 1]))*/ );
+    // //}
 
-    // (5) Execute the offloaded function.
-    // snrt_reset_perf_counter(SNRT_PERF_CNT0);
-    // snrt_reset_perf_counter(SNRT_PERF_CNT1);
-    // snrt_start_perf_counter(SNRT_PERF_CNT0, SNRT_PERF_CNT_ISSUE_FPU, core_id);
-    // snrt_start_perf_counter(SNRT_PERF_CNT1, SNRT_PERF_CNT_DMA_BUSY, core_id);
-    cycles = read_csr(mcycle);
-    dma_wait_cycles = 0;
+    // // (5) Execute the offloaded function.
+    // // snrt_reset_perf_counter(SNRT_PERF_CNT0);
+    // // snrt_reset_perf_counter(SNRT_PERF_CNT1);
+    // // snrt_start_perf_counter(SNRT_PERF_CNT0, SNRT_PERF_CNT_ISSUE_FPU, core_id);
+    // // snrt_start_perf_counter(SNRT_PERF_CNT1, SNRT_PERF_CNT_DMA_BUSY, core_id);
+    // cycles = read_csr(mcycle);
+    // dma_wait_cycles = 0;
 
-   //offloadFn = (unsigned int *) 0x2f0004ac;
+    offloadFn = (unsigned int *) 0x2f000a48;
 
     offloadFn(offloadArgs);
+    break;
+    // // snrt_stop_perf_counter(SNRT_PERF_CNT0);
+    // // snrt_stop_perf_counter(SNRT_PERF_CNT1);
+    // // issue_fpu = snrt_get_perf_counter(SNRT_PERF_CNT0);
+    // // dma_busy = snrt_get_perf_counter(SNRT_PERF_CNT1);
 
-    // snrt_stop_perf_counter(SNRT_PERF_CNT0);
-    // snrt_stop_perf_counter(SNRT_PERF_CNT1);
-    // issue_fpu = snrt_get_perf_counter(SNRT_PERF_CNT0);
-    // dma_busy = snrt_get_perf_counter(SNRT_PERF_CNT1);
-
-    //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-    //  snrt_trace("end offloading\n");
+    // //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    // //  snrt_trace("end offloading\n");
     
-    // (6) Report EOC and profiling
-    //snrt_info("cycles: %d\r\n", cycles);
+    // // (6) Report EOC and profiling
+    // //snrt_info("cycles: %d\r\n", cycles);
 
-    mailbox_write(MBOX_DEVICE_DONE);
-    cycles = read_csr(mcycle) - cycles;
-    mailbox_write(cycles);
-    mailbox_write(dma_wait_cycles);
+    // mailbox_write(MBOX_DEVICE_DONE);
+    // cycles = read_csr(mcycle) - cycles;
+    // mailbox_write(cycles);
+    // mailbox_write(dma_wait_cycles);
 
 
-    //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
-    //  snrt_trace("Kernel execution time [Snitch cycles] = %d\n", cycles);
+    // //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
+    // //  snrt_trace("Kernel execution time [Snitch cycles] = %d\n", cycles);
 
-    if (nbOffloadRabMissHandlers) {
-      offload_rab_miss_sync = 0xdeadbeefU;
-      // gomp_atomic_add_thread_pool_idle_cores(nbOffloadRabMissHandlers);
-    }
+    // if (nbOffloadRabMissHandlers) {
+    //   offload_rab_miss_sync = 0xdeadbeefU;
+    //   // gomp_atomic_add_thread_pool_idle_cores(nbOffloadRabMissHandlers);
+    // }
   }
 
   return 0;
@@ -299,34 +299,39 @@ int main(int argc, char *argv[]) {
   unsigned core_idx = snrt_cluster_core_idx();
   unsigned core_num = snrt_cluster_core_num();
 
-
+  *(volatile unsigned int *)0x2f00fffc = 0x1;
   /**
    * One core initializes the global data structures
    */
   //actually is the l2 layout
   if (snrt_is_dm_core()) {
    // read memory layout from scratch0
-    memcpy(&l3l, (void *)soc_eoc_scratch[0], sizeof(struct l3_layout));
-    g_a2h_rb = (struct ring_buf *)l3l.a2h_rb;
-    g_a2h_mbox = (struct ring_buf *)l3l.a2h_mbox;
-    g_h2a_mbox = (struct ring_buf *)l3l.h2a_mbox;
+    // memcpy(&l3l, (void *)soc_scratch[1], sizeof(struct l3_layout));
+    // memcpy(&l3l, (void *)soc_eoc_scratch[0], sizeof(struct l3_layout));
+    // g_a2h_rb = (struct ring_buf *)l3l.a2h_rb;
+    // g_a2h_mbox = (struct ring_buf *)l3l.a2h_mbox;
+    // g_h2a_mbox = (struct ring_buf *)l3l.h2a_mbox;
     
   }
 
   snrt_cluster_hw_barrier();
+  *(volatile unsigned int *)0x2f00fffc = 0x2;
 
   __snrt_omp_bootstrap(core_idx);
 
+  *(volatile unsigned int *)0x2f00fffc = 0x3;
 
 
   gomp_offload_manager();
 
+  *(volatile unsigned int *)0x2f00fffc = 0x4;
+
   //snrt_trace("bye\n");
   // exit
-  __snrt_omp_destroy(core_idx);
+  //__snrt_omp_destroy(core_idx);
 
 
-  snrt_hero_exit(0);
+  // snrt_hero_exit(0);
  
   return 0;
 }
